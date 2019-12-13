@@ -11,7 +11,7 @@ def qe(x,y,n): #x^y % n 快速指数运算 O(logn)
         t = t * t % n
     return s
 
-def MRprimeTest(p, t):  # 素数p，次数t
+def MRprimeTest(p, t):  # 素数p，次数t, 素性检测
     q = p - 1
     k = 0
     while q & 1 == 0:
@@ -47,8 +47,16 @@ def ex_eulid(a,b):  #拓展欧几里得求逆元
     return x,y
 
 if __name__ == "__main__":
-    p = 197
-    q = 173
+    while True:
+        print("输入素数 p:")
+        p = int(input())
+        if MRprimeTest(p,20):
+            break
+    while True:
+        print("输入素数 q:")
+        q = int(input())
+        if MRprimeTest(q, 20):
+            break
 
     n = p * q
     fn = (p - 1) * (q - 1)
@@ -61,10 +69,12 @@ if __name__ == "__main__":
     privatekey, y = ex_eulid(publickey, fn)
     privatekey %= fn
 
-    print("公钥为：" + str(publickey) + ",私钥为：" + str(privatekey))
-    print(publickey * privatekey % fn)
+    print("公钥为e：" + str(publickey) + " n:",n)
+    print("私钥为d：" + str(privatekey) + " n:",n)
+    print("验证publickey * privatekey % fn =",publickey * privatekey % fn)
 
-    text = random.randint(2,fn-1)
+    print("输入原文(<fn:"+str(fn)+"):")
+    text = int(input())
     print("原文:",text)
     code = qe(text,publickey,n)
     print("加密后:",code)

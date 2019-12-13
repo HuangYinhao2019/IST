@@ -44,15 +44,23 @@ s1 = [
     [4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0],
     [15, 12, 8, 2, 4, 9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13]]
 #IP置换
-ip = [58, 50, 42, 34, 26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4,
-      62, 54, 46, 38, 30, 22, 14, 6, 64, 56, 48, 40, 32, 24, 16, 8,
-      57, 49, 41, 33, 25, 17, 9, 1, 59, 51, 43, 35, 27, 19, 11, 3,
-      61, 53, 45, 37, 29, 21, 13, 5, 63, 55, 47, 39, 31, 23, 15, 7]
+ip = [58, 50, 42, 34, 26, 18, 10, 2,
+      60, 52, 44, 36, 28, 20, 12, 4,
+      62, 54, 46, 38, 30, 22, 14, 6,
+      64, 56, 48, 40, 32, 24, 16, 8,
+      57, 49, 41, 33, 25, 17, 9, 1,
+      59, 51, 43, 35, 27, 19, 11, 3,
+      61, 53, 45, 37, 29, 21, 13, 5,
+      63, 55, 47, 39, 31, 23, 15, 7]
 #逆IP
-_ip = [40, 8, 48, 16, 56, 24, 64, 32, 39, 7, 47, 15, 55, 23, 63, 31,
-       38, 6, 46, 14, 54, 22, 62, 30, 37, 5, 45, 13, 53, 21, 61, 29,
-       36, 4, 44, 12, 52, 20, 60, 28, 35, 3, 43, 11, 51, 19, 59, 27,
-       34, 2, 42, 10, 50, 18, 58, 26, 33, 1, 41, 9, 49, 17, 57, 25]
+_ip = [40, 8, 48, 16, 56, 24, 64, 32,
+       39, 7, 47, 15, 55, 23, 63, 31,
+       38, 6, 46, 14, 54, 22, 62, 30,
+       37, 5, 45, 13, 53, 21, 61, 29,
+       36, 4, 44, 12, 52, 20, 60, 28,
+       35, 3, 43, 11, 51, 19, 59, 27,
+       34, 2, 42, 10, 50, 18, 58, 26,
+       33, 1, 41, 9, 49, 17, 57, 25]
 
 LS = [1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1]
 #ip 置换
@@ -184,6 +192,36 @@ def encryption(D, K):
     str = binary2ASC(intArr2Str(temp))
     return str
 
+def decryption(D, K):
+    global subKey
+    temp = [0] * 64;
+    data = string2Binary(D)
+    # 第一步初始置
+    data = changeIP(data)
+    left = [([0] * 32) for _ in range(17)]
+    right = [([0] * 32) for _ in range(17)]
+    for j in range(32):
+        left[0][j] = data[j]
+        right[0][j] = data[j + 32]
+    setKey(K)  # sub key ok
+    subKey = subKey[::-1]
+    for i in range(1, 17):
+        # 获取(48bit)的轮子密
+        key = subKey[i - 1]
+        # L1 = R0
+        left[i] = right[i - 1]
+        # R1 = L0 ^ f(R0,K1)
+        fTemp = f(right[i - 1], key)  # 32bit
+        right[i] = diffOr(left[i - 1], fTemp)
+    # 组合的时候，左右调换
+    for i in range(32):
+        temp[i] = right[16][i]
+        temp[32 + i] = left[16][i]
+
+    temp = changeInverseIP(temp)
+    str = binary2ASC(intArr2Str(temp))
+    return str
+
 def press(source):
     ret = [0] * 32
     temp = [([0] * 6) for i in range(8)]
@@ -213,9 +251,14 @@ def dataP(source):
 
 def expend(source):
     ret = [0] * 48
-    temp = [32, 1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12,
-            13, 12, 13, 14, 15, 16, 17, 16, 17, 18, 19, 20, 21, 20, 21, 22,
-            23, 24, 25, 24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32, 1]
+    temp = [32, 1, 2, 3, 4, 5,
+            4, 5, 6, 7, 8, 9,
+            8, 9, 10, 11, 12, 13,
+            12, 13, 14, 15, 16, 17,
+            16, 17, 18, 19, 20, 21,
+            20, 21, 22, 23, 24, 25,
+            24, 25, 26, 27, 28, 29,
+            28, 29, 30, 31, 32, 1]
     for i in range(48):
         ret[i] = source[temp[i] - 1]
     return ret
@@ -258,7 +301,8 @@ def tran_m(D):
             l = ''
     while len(l) > 0 and len(l) < 16:
         l += '0'
-    Dlist.append(l)
+    if len(l) != 0:
+        Dlist.append(l)
     return Dlist
 
 def key(K):
@@ -279,38 +323,44 @@ def tranback(Dlist):
             m += chr(int(hex2dec(h)))
     return m
 
-# if __name__ == "__main__":
-#     print("please input the message:")
-#     D = input()
-#     print("please input the key:")
-#     K = input()
-#     print("please choose ECB or CBC")
-#     way = input()
-#     if way != 'ECB' and way != 'CBC':
-#         way = 'ECB'
-#
-#     Dlist = tran_m(D)
-#     k = key(K)
-#     print("原文:",tranback(Dlist))
-#     print("明文格式化分块:",Dlist,"密钥:" ,k)
-#     print("加密前明文分块:",tranback(Dlist))
-#     if way == 'ECB':
-#         Clist = []
-#         for i in range(len(Dlist)):
-#             Clist.append(encryption(Dlist[i],k))
-#         print("加密后密文分块:",Clist)
-#         print("加密后密文:",tranback(Clist))
-#         D2list = []
-#         for i in range(len(Clist)):
-#             D2list.append(encryption(Clist[i],k))
-#         print("解密后明文分块:", D2list)
-#         print("解密后明文:",tranback(D2list))
-#
-#     # print(encryption(D,K))
-#     # print(encryption(encryption(D,K),K))
+if __name__ == "__main__":
+    print("输入明文:")
+    D = input()
+    print("输入密钥:")
+    K = input()
+    print("选择模式(ECB,CBC)")
+    way = input()
+    if way != 'ECB' and way != 'CBC': ##默认为ECB
+        way = 'ECB'
 
-D = '6666666666666666'
-K = 'FFFFFFFFFFFF5FFF'
-C = 'CF1E52A50BC1738D'
+    Dlist = tran_m(D)
+    k = key(K)
+    print("明文格式化分块:",Dlist,"密钥:" ,k)
+    print("加密前明文:",tranback(Dlist))
+    if way == 'ECB':
+        Clist = []
+        for i in range(len(Dlist)):
+            Clist.append(encryption(Dlist[i],k))
+        print("加密后密文分块:",Clist)
+        print("加密后密文:",tranback(Clist))
+        D2list = []
+        for i in range(len(Clist)):
+            D2list.append(decryption(Clist[i],k))
+        print("解密后明文分块:", D2list)
+        print("解密后明文:",tranback(D2list))
+    if way == 'CBC':
+        IV = '1234567890ABCDEF'
+        IV = string2Binary(IV)
+        Clist = []
+        Clist.append(encryption(binary2ASC(intArr2Str(diffOr(string2Binary(Dlist[0]),IV))),k))
+        for i in range(1,len(Dlist)):
+            Clist.append(encryption(binary2ASC(intArr2Str(diffOr(string2Binary(Dlist[i]),string2Binary(Clist[-1])))),k))
+        print("加密后密文分块:",Clist)
+        print("加密后密文:",tranback(Clist))
+        D2list = []
+        D2list.append(binary2ASC(intArr2Str(diffOr(string2Binary(decryption(Clist[0],k)),IV))))
+        for i in range(1,len(Clist)):
+            D2list.append(binary2ASC(intArr2Str(diffOr(string2Binary(decryption(Clist[i],k)),string2Binary(Clist[i-1])))))
+        print("解密后明文分块:", D2list)
+        print("解密后明文:", tranback(D2list))
 
-print(encryption(encryption(D,K),K))
