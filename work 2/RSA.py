@@ -2,12 +2,6 @@ import random
 # 求乘法逆元
 # 快速指数运算
 
-p = 197
-q = 173
-
-n = p * q
-fn = (p-1)*(q-1)
-
 def qe(x,y,n): #x^y % n 快速指数运算 O(logn)
     s,t,u = 1,x,y
     while u:
@@ -52,21 +46,27 @@ def ex_eulid(a,b):  #拓展欧几里得求逆元
         x ,y = y1,x1-k*y1
     return x,y
 
-while True:
-    publickey = random.randint(2,fn-1)
-    if gcd(publickey,fn) == 1:
-        break
+if __name__ == "__main__":
+    p = 197
+    q = 173
 
-privatekey,y = ex_eulid(publickey,fn)
-privatekey %= fn
+    n = p * q
+    fn = (p - 1) * (q - 1)
 
-print("公钥为："+str(publickey)+",私钥为："+str(privatekey))
-print(publickey*privatekey%fn)
+    while True:
+        publickey = random.randint(2, fn - 1)
+        if gcd(publickey, fn) == 1:
+            break
 
+    privatekey, y = ex_eulid(publickey, fn)
+    privatekey %= fn
 
-text = random.randint(2,fn-1)
-print("原文:",text)
-code = qe(text,publickey,n)
-print("加密后:",code)
-decrypt = qe(code,privatekey,n)
-print("解密后:",decrypt)
+    print("公钥为：" + str(publickey) + ",私钥为：" + str(privatekey))
+    print(publickey * privatekey % fn)
+
+    text = random.randint(2,fn-1)
+    print("原文:",text)
+    code = qe(text,publickey,n)
+    print("加密后:",code)
+    decrypt = qe(code,privatekey,n)
+    print("解密后:",decrypt)

@@ -247,7 +247,70 @@ def binary2ASC(s):
         st += bin2hex(s[i * 4: i * 4 + 4])
     return st
 
-D = '6666666666666666'
-K = 'FFFFFFFFFFFFFFFF'
+def tran_m(D):
+    Dlist = []
+    l = ''
+    for i in range(len(D)):
+        p = dec2hex(ord(D[i]))
+        l += p
+        if len(l) == 16:
+            Dlist.append(l)
+            l = ''
+    while len(l) > 0 and len(l) < 16:
+        l += '0'
+    Dlist.append(l)
+    return Dlist
 
-print(encryption(D,K))
+def key(K):
+    while len(K) < 8:
+        K += '0'
+    if len(K) > 8:
+        K = K[:8]
+    k = ''
+    for c in K:
+        k += dec2hex(ord(c))
+    return k
+
+def tranback(Dlist):
+    m = ''
+    for i in range(len(Dlist)):
+        for j in range(0,len(Dlist[i]),2):
+            h = Dlist[i][j:j+2]
+            m += chr(int(hex2dec(h)))
+    return m
+
+# if __name__ == "__main__":
+#     print("please input the message:")
+#     D = input()
+#     print("please input the key:")
+#     K = input()
+#     print("please choose ECB or CBC")
+#     way = input()
+#     if way != 'ECB' and way != 'CBC':
+#         way = 'ECB'
+#
+#     Dlist = tran_m(D)
+#     k = key(K)
+#     print("原文:",tranback(Dlist))
+#     print("明文格式化分块:",Dlist,"密钥:" ,k)
+#     print("加密前明文分块:",tranback(Dlist))
+#     if way == 'ECB':
+#         Clist = []
+#         for i in range(len(Dlist)):
+#             Clist.append(encryption(Dlist[i],k))
+#         print("加密后密文分块:",Clist)
+#         print("加密后密文:",tranback(Clist))
+#         D2list = []
+#         for i in range(len(Clist)):
+#             D2list.append(encryption(Clist[i],k))
+#         print("解密后明文分块:", D2list)
+#         print("解密后明文:",tranback(D2list))
+#
+#     # print(encryption(D,K))
+#     # print(encryption(encryption(D,K),K))
+
+D = '6666666666666666'
+K = 'FFFFFFFFFFFF5FFF'
+C = 'CF1E52A50BC1738D'
+
+print(encryption(encryption(D,K),K))
