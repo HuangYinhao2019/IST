@@ -1,5 +1,7 @@
 import random
 
+base = [str(x) for x in range(10)] + [chr(x) for x in range(ord('A'), ord('A') + 6)]
+
 def get_matrix_of_clear_number(clear_number):
     # 得到输入数据对应的十六进制ASCII码矩阵
     dir = {0: [], 1: [], 2: [], 3: []}
@@ -9,20 +11,80 @@ def get_matrix_of_clear_number(clear_number):
         dir[i % 4].append(hex(number))
     return dir
 
-def get_matrix_of_cipher_number():
-    # 得到随机生成的密钥的十六进制矩阵
-    dir_number = {10: "A", 11: "B", 12: "C", 13: "D", 14: "E", 15: "F"}
-    string = ''
-    for i in range(16):
-        number = int(random.random() * 16)
-        if (number >= 10):
-            number = dir_number[number]
-        else:
-            number = str(number)
-        string = string + number
+#2 to 10
+def bin2dec(string_num):
+    return str(int(string_num, 2))
+#16 to 10
+def hex2dec(string_num):
+    return str(int(string_num.upper(), 16))
+#10 to 2
+def dec2bin(string_num):
+    num = int(string_num)
+    mid = []
+    while True:
+        if num == 0: break
+        num, rem = divmod(num, 2)
+        mid.append(base[rem])
 
-    dir = get_matrix_of_clear_number(string)
-    return dir
+    return ''.join([str(x) for x in mid[::-1]])
+#10 to 16
+def dec2hex(string_num):
+    num = int(string_num)
+    if num == 0:
+        return '0'
+    mid = []
+    while True:
+        if num == 0: break
+        num, rem = divmod(num, 16)
+        mid.append(base[rem])
+
+    return ''.join([str(x) for x in mid[::-1]])
+#16 to 2
+def hex2bin(string_num):
+    return dec2bin(hex2dec(string_num.upper()))
+#2 to 16
+def bin2hex(string_num):
+    return dec2hex(bin2dec(string_num))
+
+def binary2ASC(s):
+    st = ''
+    ii = 0
+    le = len(s)
+    if le % 4 != 0:
+        while ii < (4 - len % 4):
+            s = "0" + s
+    le = le / 4
+    for i in range(int(le)):
+        st += bin2hex(s[i * 4: i * 4 + 4])
+    return st
+
+def intArr2Str(arr):
+    sb = []
+    le = len(arr)
+    for i in range(le):
+        sb.append(str(arr[i]))
+    return ''.join(sb)
+
+def string2Binary(str):
+    le = len(str)
+    dest = [0] * le * 4
+    i = 0
+    for c in str:
+        i += 4
+        j = 0
+        s = hex2bin(c)
+        l = len(s)
+        for d in s:
+            dest[i - l + j] = int(d)
+            j += 1
+    return dest
+
+def diffOr(source1, source2):
+    le = len(source1)
+    dest = [0] * le
+    for i in range(le):
+        dest[i] = source1[i] ^ source2[i]
+    return dest
 
 def define_S_box(fir_num, last_num):
     # 定义S盒
@@ -381,7 +443,7 @@ def get_round_key_plus(clear_number, dir_key_extend):
         dir_new_number[i] = list
     return dir_new_number
 
-def define_encryption(clear_number, dir_key_extend):
+def encryption(clear_number, dir_key_extend):
     # 对明文进行轮密钥加
     dir_new_number = get_round_key_plus(clear_number, dir_key_extend)
 
@@ -411,7 +473,7 @@ def define_encryption(clear_number, dir_key_extend):
 
     return dir_new_number
 
-def define_decryption(clear_number, dir_key_extend):
+def decryption(clear_number, dir_key_extend):
     # 对密文进行轮密钥加
     dir_key_extend_part = {
         0: dir_key_extend[40],
@@ -465,40 +527,101 @@ def get_outcome(dir_num):
             string += num
     return string
 
-def get_standard_input(string):
-    # 得到16个字符的输入
-    length = len(string)
-    length = 16 - length
-    for i in range(length):
-        string += '0'
-    return string
+def tran_m(D):
+    Dlist = []
+    l = ''
+    for i in range(len(D)):
+        l += D[i]
+        if len(l) == 16:
+            Dlist.append(l)
+            l = ''
+    while len(l) > 0 and len(l) < 16:
+        l += '0'
+    if len(l) != 0:
+        Dlist.append(l)
+    return Dlist
+
+def key(K):
+    while len(K) < 16:
+        K += '0'
+    if len(K) > 16:
+        K = K[:16]
+    k = ''
+    for c in K:
+        k += dec2hex(ord(c))
+    return k
+
+def diff(str1,str2):
+    l1 = ''
+    l2 = ''
+    for i in range(len(str1)):
+        l1 += dec2hex(ord(str1[i]))
+        l2 += dec2hex(ord(str2[i]))
+    str1 = string2Binary(l1)
+    str2 = string2Binary(l2)
+    xor = diffOr(str1,str2)
+    str = intArr2Str(xor)
+    bi = binary2ASC(str)
+    res = ''
+    for i in range(0,32,2):
+        res += chr(int(bi[i:i+2],16))
+    return res
+
 
 if __name__ == "__main__":
-    print("Enter numbers( 0 - 16 number, if less than 16, it will fill with '0' by default): ")
-    clear_number = input()
-    clear_number = get_standard_input(clear_number)
+    print("输入明文:")
+    D = input()
+    print("输入密钥:")
+    K = input()
+    print("选择模式(ECB,CBC)")
+    way = input()
+    if way != 'ECB' and way != 'CBC':  ##默认为ECB
+        way = 'ECB'
+    Dlist = tran_m(D)
+    k = key(K)
+    k = get_matrix_of_clear_number(k)
+    k = get_extend_key(k)
+    print("明文分块:", Dlist, "密钥:", k)
+    if way == 'ECB':
+        C = ''
+        for i in range(len(Dlist)):
+            dm = get_matrix_of_clear_number(Dlist[i])
+            cm = encryption(dm,k)
+            # print(get_outcome(decryption(cm,k)))
+            # print(cm)
+            C += get_outcome(cm)
+        print("加密后密文:",C)
+        Clist = tran_m(C)
+        D2 = ''
+        for i in range(len(Clist)):
+            cm = get_matrix_of_clear_number(Clist[i])
+            d2m = decryption(cm,k)
+            D2 += get_outcome(d2m)
+        print("解密后明文:",D2)
+    if way == 'CBC':
+        IV = '1234567890ABCDEF'
+        C = ''
+        Clist = []
+        d1 = get_matrix_of_clear_number(diff(Dlist[0],IV))
+        c1 = get_outcome(encryption(d1,k))
+        Clist.append(c1)
+        C += c1
+        for i in range(1,len(Dlist)):
+            di = get_matrix_of_clear_number(diff(Clist[-1],Dlist[i]))
+            ci = get_outcome(encryption(di,k))
+            Clist.append(ci)
+            C += ci
+        print("加密后密文:",C)
+        Clist = tran_m(C)
+        D2 = ''
+        c2 = get_matrix_of_clear_number(Clist[0])
+        d2 = get_outcome(decryption(c2,k))
+        D2 += diff(d2,IV)
+        for i in range(1,len(Clist)):
+            ci = get_matrix_of_clear_number(Clist[i])
+            di = get_outcome(decryption(ci,k))
+            D2 += diff(di,Clist[i-1])
+        print("解密后明文:", D2)
 
-    # 得到明文矩阵
-    dir_clear_number = get_matrix_of_clear_number(clear_number)
 
-    print_(dir_clear_number)  # 输出明文矩阵
-    print("\n")
 
-    # 得到密文矩阵
-    dir_cipher_number = get_matrix_of_cipher_number()
-
-    # 得到扩展的密钥
-    dir_key_extend = get_extend_key(dir_cipher_number)
-
-    print(dir_key_extend)  # 输出扩展密钥
-    print("\n")
-
-    dir_new_encrypt_number = define_encryption(dir_clear_number, dir_key_extend)
-    print_(dir_new_encrypt_number)  # 输出密文矩阵
-    print("\n")
-
-    dir_orinal_ = define_decryption(dir_new_encrypt_number, dir_key_extend)
-    print_(dir_orinal_)  # 输出解密后的矩阵
-
-    dir_ = get_outcome(dir_orinal_)
-    print(dir_)  # 输出解密后的原文
